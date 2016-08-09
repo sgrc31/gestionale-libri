@@ -8,17 +8,12 @@
   {% endif %}
 {% endwith %}
 <h1>Sign In</h1>
-<form action="" method="post" name="login">
+<form action="" method="post" name="new_order">
   {{ form.hidden_tag() }}
   <p>
-    Please enter your OpenID:<br>
-    {{ form.openid(size=40) }}<br>
+    Nome studente:<br/>
+    {{ form.nome_ordine(size=40) }}<br/>
   </p>
-  <p>{{ form.remember_me }} Remember Me</p>
-  <p><input type="submit" value="Sign In"></p>
+  <p>{{ form.grades }}</p>
+  <p><input type="submit" value="Procedi"></p>
 </form>
-<div>
-  {% for book in lista_associata %}
-    <span>{{ book.title }}</span>
-  {% endfor %}
-</div>

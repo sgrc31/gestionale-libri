@@ -1,0 +1,26 @@
+<h1>Mezzopasso</h1>
+
+<p>{{ nome_studente }} andrà in {{ nome_classe }}</p>
+<p>lista libri adottati da {{ nome_classe }}</p>
+
+<form action="" method="post">
+  <table style="width:100%">
+    <tr>
+      <th>Titolo</th>
+      <th>Autore</th>
+      <th>EAN</th>
+      <th>Materia</th>
+      <th>Ordinato?</th>
+    </tr>
+    {% for libro in lista_libri_adottati %}
+      <tr>
+        <td>{{ libro.title }}</td>
+        <td>{{ libro.author }}</td>
+        <td>{{ libro.ean }}</td>
+        <td>{{ libro.subject }}</td>
+        <td><input name="test_check" type="checkbox" value="{{ libro.id }}"/></td>
+      </tr>
+    {% endfor %}
+  </table>
+  <p><input name="" type="submit" value="Procedi"/></p>
+</form>

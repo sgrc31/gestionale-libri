@@ -2,7 +2,7 @@
 
 import os
 import csv
-from flask import Flask, render_template, request, flash, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, flash, redirect, url_for, session
 from flask_script import Manager
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import Form
@@ -77,6 +77,7 @@ class Grade(db.Model):
 #----------------
 class TestForm(Form):
     grades = QuerySelectField('Grades', get_label='name')
+    nome_ordine = StringField('Nome studente', validators=[DataRequired()])
 
 class LoginForm(Form):
     openid = StringField('openid', validators=[DataRequired()])
@@ -91,68 +92,36 @@ class TestMulti(Form):
 #------------
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    form = LoginForm()
+    form = TestForm()
+    form.grades.query = Grade.query.all()
     if form.validate_on_submit():
-        #session['messaggio'] = form.openid.data
-        #flash('Inseriti: {} e {}'.format(form.openid.data, str(form.remember_me.data)))
-        session['messaggio'] = form.openid.data
-        return redirect(url_for('prova'))
+        session['nome_studente'] = form.nome_ordine.data
+        session['id_scuola'] = form.grades.data.id
+        session['nome_classe'] = form.grades.data.name
+        return redirect(url_for('mezzopasso'))
     return render_template('index.html',
-                           form = form
-                           )
-@app.route('/prova', methods=['GET', 'POST'])
-def prova():
-    #messaggio = session['messaggio']
-    #nome = request.args.get('nome')
-    return render_template('prova.html',
-                           nome = session['messaggio']
-                           )
+                    form = form
+                    )
 
-@app.route('/test', methods=['GET', 'POST'])
-def test():
-    form = TestForm()
-    #form.grades.choices = [(x.id, x.name) for x in Grade.query.all()]
-    form.grades.query = Grade.query.all()
-    if form.validate_on_submit():
-        flash('{}'.format(form.grades.data.name))
-        lista = Grade.query.filter_by(id=form.grades.data.id).first().adopted_books
-        return render_template('test.html',
-                               form = form,
-                               lista_associata = lista
-                               )
-    return render_template('test.html',
-                           form = form,
-                           lista_associata = ''
+@app.route('/mezzopasso', methods=['GET', 'POST'])
+def mezzopasso():
+    lista_libri_adottati = Grade.query.filter_by(id = session['id_scuola']).first().adopted_books
+    if request.method == "POST":
+        session['lista_libri_ordinati'] = request.form.getlist("test_check")
+        return redirect(url_for('terzopasso')) 
+    return render_template('mezzopasso.html',
+                           nome_studente = session['nome_studente'],
+                           nome_classe = session['nome_classe'],
+                           lista_libri_adottati = lista_libri_adottati
                            )
 
-@app.route('/test2', methods=['GET', 'POST'])
-def test2():
-    form = TestForm()
-    form.grades.query = Grade.query.all()
-    if form.validate_on_submit():
-        form2 = TestMulti()
-        form2.da_comprare.query = Grade.query.filter_by(id=form.grades.data.id).first().adopted_books
-        nomome = form.grades.data.name
-        #listona = Grade.query.filter_by(id=form.grades.data.id).first().adopted_books
-        return render_template('secondo.html', nome_scuola = nomome, form = form2)
-        #return redirect(url_for('secondo', nome_scuola = nomome, lista_libri_adottati = listona))
-    return render_template('test2.html',
-                           form = form
+@app.route('/terzopasso', methods=['GET', 'POST'])
+def terzopasso():
+    return render_template('terzopasso.html',
+                           nome_studente = session['nome_studente'],
+                           nome_classe = session['nome_classe'],
+                           libri_ordinati = session['lista_libri_ordinati']
                            )
-
-#@app.route('/secondo', methods=['GET', 'POST'])
-#def secondo():
-#    return render_template('secondo.html',
-#                           nome_scuola = '',
-#                           lista_libri_adottati = ''
-#                           )
-
-#@app.route('/terzo', methods=['GET', 'POST'])
-#def terzo():
-#    return render_template('terzo.html',
-#                           nome_scuola = ''
-#                           lista_libri_adottati = ''
-#                           )
 #----------------
 # Start app
 #----------------
