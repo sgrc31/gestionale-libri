@@ -7,7 +7,14 @@
     </ul>
   {% endif %}
 {% endwith %}
-<h1>Sign In</h1>
+{% if lista_ordini %}
+  <ul>
+    {% for studente in lista_ordini|sort(attribute='name') %}
+      <li><a href="{{ url_for('order_page', ordine_id = studente.id, ordine_nome = studente.name) }}">{{ studente.name }}</a></li>
+    {% endfor %}
+  </ul>
+{% endif %}
+<h2>Crea nuovo</h2>
 <form action="" method="post" name="new_order">
   {{ form.hidden_tag() }}
   <p>

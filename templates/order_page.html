@@ -1,0 +1,7 @@
+<h1>Pagina per {{ ordine_nome }}</h1>
+
+<ul>
+  {% for libro in lista_libri %}
+    <li>{{ libro.title }}</li>
+  {% endfor %}
+</ul>

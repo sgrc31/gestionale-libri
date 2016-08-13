@@ -29,6 +29,11 @@ adoptions = db.Table('adoptions',
                      db.Column('grade_id', db.Integer, db.ForeignKey('grades.id'))
                      )
 
+orders = db.Table('orders',
+                  db.Column('book_id', db.Integer, db.ForeignKey('books.id')),
+                  db.Column('student_id', db.Integer, db.ForeignKey('students.id'))
+                  )
+
 
 #----------------------
 #  Classi Database
@@ -42,6 +47,7 @@ class Book(db.Model):
     subject = db.Column(db.Text, nullable = False)
     publisher = db.Column(db.Text, nullable = False)
     adopted_by = db.relationship('Grade', secondary = adoptions, backref = db.backref('adopted_books', lazy = 'dynamic'))
+    ordered_by = db.relationship('Student', secondary = orders, backref = db.backref('ordered_books', lazy = 'dynamic'))
 
     def __init__(self, title, ean, author = 'default', subject = 'default', publisher = 'default'):
         self.title = title
@@ -70,6 +76,16 @@ class Grade(db.Model):
 
     def __init__(self, grade):
         self.name = grade
+
+class Student(db.Model):
+    __tablename__ = 'students'
+    id = db.Column(db.Integer, primary_key = True)
+    name = db.Column(db.Text, nullable = False)
+    phone = db.Column(db.Text, nullable = True)
+
+    def __init__(self, name, phone=000000):
+        self.name = name
+        self.phone = phone
 
 
 #----------------
@@ -100,20 +116,47 @@ def index():
         session['nome_classe'] = form.grades.data.name
         return redirect(url_for('mezzopasso'))
     return render_template('index.html',
-                    form = form
-                    )
+                           form = form,
+                           lista_ordini = Student.query.all()
+                           )
+
+
+#@app.route('/mezzopasso', methods=['GET', 'POST'])
+#def mezzopasso():
+#    lista_libri_adottati = Grade.query.filter_by(id = session['id_scuola']).first().adopted_books
+#    if request.method == "POST":
+#        session['lista_libri_ordinati'] = request.form.getlist("test_check")
+#        return redirect(url_for('terzopasso')) 
+#    return render_template('mezzopasso.html',
+#                           nome_studente = session['nome_studente'],
+#                           nome_classe = session['nome_classe'],
+#                           lista_libri_adottati = lista_libri_adottati
+#                           )
 
 @app.route('/mezzopasso', methods=['GET', 'POST'])
 def mezzopasso():
     lista_libri_adottati = Grade.query.filter_by(id = session['id_scuola']).first().adopted_books
     if request.method == "POST":
-        session['lista_libri_ordinati'] = request.form.getlist("test_check")
-        return redirect(url_for('terzopasso')) 
+        lista_libri_ordinati = request.form.getlist("test_check")
+        studente = Student(session['nome_studente'])
+        for id_libro in lista_libri_ordinati:
+            studente.ordered_books.append(Book.query.filter_by(id=id_libro).first())
+        db.session.commit()
+        return redirect(url_for('index')) 
     return render_template('mezzopasso.html',
                            nome_studente = session['nome_studente'],
                            nome_classe = session['nome_classe'],
                            lista_libri_adottati = lista_libri_adottati
                            )
+
+@app.route('/ordini/<ordine_id>/<ordine_nome>', methods=['GET', 'POST'])
+def order_page(ordine_id, ordine_nome):
+    return render_template('order_page.html',
+                           ordine_id = ordine_id,
+                           ordine_nome = ordine_nome,
+                           lista_libri = Student.query.filter_by(id=ordine_id).first().ordered_books
+                           )
+
 
 @app.route('/terzopasso', methods=['GET', 'POST'])
 def terzopasso():
